@@ -58,6 +58,46 @@ def accept_loop(connect_sock, sync_sock):
                     sock.close()
                     descriptors.remove(sock)
 
+# Sync client sends all data for directries and files, and save them in data_list
+def sync(sock, connect_sockets):
+    data_list = []
+    while True:
+        header = sock.recv(RECV_SIZE_MAX)
+        header_str = header
+        if "DONE".encode() in header_str:
+            logging.info("all file received.\n")
+            break
+        logging.info("header received.")
+        sock.send(header)
+        data = None
+        while True:
+            rec_data = sock.recv(RECV_SIZE_MAX)
+            if data:
+                data += rec_data
+            else:
+                data = rec_data
+            if len(rec_data)<RECV_SIZE_MAX:
+                break
+        data_list.append((header, data))
+        logging.info("data received.")
+        sock.send("data received.".encode())
+
+    # broadcast to other connecting client
+    logging.info("start broadcast.")
+    for connect_socket in connect_sockets:
+        for header, data in data_list:
+            connect_socket.send(header)
+            sign = connect_socket.recv(RECV_SIZE_MAX)
+            if "OK".encode() in sign:
+                logging.info("sending data.")
+                connect_socket.send(data)
+            else:
+                connect_socket.send("dummy".encode())
+                logging.info("continue sync.")
+            sign = connect_socket.recv(RECV_SIZE_MAX)
+            logging.info("one file sync done.")
+    logging.info("broadcast done.\n")
+
 if __name__ == '__main__':
     descriptors = []
     connect_sock = create_server_socket(CONNECT_PORT)
