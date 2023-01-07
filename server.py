@@ -98,6 +98,20 @@ def sync(sock, connect_sockets):
             logging.info("one file sync done.")
     logging.info("broadcast done.\n")
 
+def main(daemon=False):
+    descriptors = []
+    connect_sock = create_server_socket(CONNECT_PORT)
+    sync_sock = create_server_socket(SYNC_PORT)
+    descriptors.append(connect_sock)
+    descriptors.append(sync_sock)
+
+    try:
+        accept_loop(connect_sock, sync_sock)
+    except KeyboardInterrupt:
+        logging.info("finished.")
+        connect_sock.close()
+        sync_sock.close()
+
 if __name__ == '__main__':
     descriptors = []
     connect_sock = create_server_socket(CONNECT_PORT)
