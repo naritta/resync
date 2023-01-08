@@ -112,6 +112,17 @@ def main(daemon=False):
         connect_sock.close()
         sync_sock.close()
 
+def daemonize():
+    pid = os.fork()
+    if pid > 0:
+        pid_file = open('python_daemon.pid','w')
+        pid_file.write(str(pid)+"\n")
+        pid_file.close()
+        print("daemon process starts in PID:", pid)
+        sys.exit()
+    if pid == 0:
+        main(True)
+
 if __name__ == '__main__':
     descriptors = []
     connect_sock = create_server_socket(CONNECT_PORT)
