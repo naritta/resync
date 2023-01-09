@@ -124,15 +124,17 @@ def daemonize():
         main(True)
 
 if __name__ == '__main__':
-    descriptors = []
-    connect_sock = create_server_socket(CONNECT_PORT)
-    sync_sock = create_server_socket(SYNC_PORT)
-    descriptors.append(connect_sock)
-    descriptors.append(sync_sock)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--daemonize", help="daemonize this app.", action="store_true")
+    args = parser.parse_args()
 
-    try:
-        accept_loop(connect_sock, sync_sock)
-    except KeyboardInterrupt:
-        logging.info("finished.")
-        connect_sock.close()
-        sync_sock.close()
+    file_handler = logging.FileHandler(f"log.txt")
+    file_handler.setFormatter(logging.Formatter("%(asctime)s@ %(name)s [%(levelname)s] %(funcName)s: %(message)s"))
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+
+    if args.daemonize:
+        logging.basicConfig(level=logging.INFO, handlers=[file_handler])
+        daemonize()
+    else:
+        logging.basicConfig(level=logging.INFO, handlers=[stdout_handler, file_handler])
+        main()
