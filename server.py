@@ -5,6 +5,7 @@ import sys
 import argparse
 import logging
 
+APIKEY = "apikey1234"
 CONNECT_PORT = 7777
 SYNC_PORT = 7778
 MAX_LISTEN = 32
@@ -17,6 +18,15 @@ def create_server_socket(port):
 
     logging.info('Server listen port:{}'.format(port))
     return server_sock
+
+def authenticate(sock):
+    apikey = sock.recv(32)
+    if APIKEY.encode() in apikey:
+        sock.send("OK".encode())
+        return True
+    else:
+        sock.send("FAIL".encode())
+        return False
 
 def accept_loop(connect_sock, sync_sock):
     logging.info('Ready for accept')
