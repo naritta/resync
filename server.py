@@ -9,6 +9,7 @@ APIKEY = "apikey1234"
 CONNECT_PORT = 7777
 SYNC_PORT = 7778
 MAX_LISTEN = 32
+RECV_SIZE_MAX = 4096
 
 def create_server_socket(port):
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
