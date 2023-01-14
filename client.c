@@ -111,6 +111,70 @@ int connect_server() {
   return 0;
 }
 
+// find all files and directries recuresively, and send it's header and data
+void send_dir(char *dir, int sockfd)
+{
+   char path[MAX_PATH];
+   struct dirent *dp;
+   DIR *dfd;
+	 char s_str[AVG_SIZE];
+	 char r_str[AVG_SIZE];
+
+   if ((dfd = opendir(dir)) == NULL) {
+      fprintf(stderr, "can't open %s\n", dir);
+      return;
+   }
+
+	 sprintf(s_str, "%s,%s,", dir, "-1");
+	 send(sockfd, &s_str, strlen(s_str), 0);
+	 recv(sockfd, r_str, AVG_SIZE, 0);
+	 char dummy_str[ACK_SIZE] = "dummy";
+	 send(sockfd, dummy_str, strlen(dummy_str), 0);
+	 char allow_sync[AVG_SIZE];
+	 recv(sockfd, allow_sync, AVG_SIZE, 0);
+
+   while ((dp = readdir(dfd)) != NULL) {
+      if (dp->d_type == DT_DIR){
+         path[0] = '\0';
+         if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+            continue;
+         sprintf(path, "%s/%s", dir, dp->d_name);
+				 printf("sending %s\n", path);
+				 // if it's directry, send filesize as -1 and notify receiver that.
+				 // concat filename and filesize using comma, and send it as header
+				 sprintf(s_str, "%s,%s,", path, "-1");
+				 send(sockfd, &s_str, strlen(s_str), 0);
+				 recv(sockfd, r_str, AVG_SIZE, 0);
+				 char dummy_str[ACK_SIZE] = "dummy";
+				 send(sockfd, dummy_str, strlen(dummy_str), 0);
+				 char ack_str[AVG_SIZE];
+	 			 recv(sockfd, ack_str, 48, 0);
+
+				 send_dir(path, sockfd);
+      } else {
+				sprintf(path, "%s/%s", dir, dp->d_name);
+				printf("sending %s\n", path);
+				sprintf(s_str, "%s,%li,", path, getFileSize(path));
+
+				send(sockfd, &s_str, strlen(s_str), 0);
+	 			recv(sockfd, r_str, AVG_SIZE, 0);
+	 			FILE *fp = fopen(path, "r");
+				char data[MAX_DATA_SIZE];
+				int n;
+				while ( (n = fread(data, sizeof(unsigned char), sizeof(data) / sizeof(data[0]), fp)) > 0 ) {
+			    int ret = write(sockfd, data, n);
+			    if (ret < 1) {
+			      perror("write error for sending file.");
+			      break;
+			    }
+			  }
+				char one_done[AVG_SIZE];
+				recv(sockfd, one_done, AVG_SIZE, 0);
+			}
+   }
+   closedir(dfd);
+}
+
 int sync_dir() {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0){
