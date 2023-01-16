@@ -21,6 +21,16 @@
 #define MAX_PATH 1024
 #define ACK_SIZE 32
 
+long getFileSize(const char *file)
+{
+    struct stat statBuf;
+
+    if (stat(file, &statBuf) == 0)
+      return statBuf.st_size;
+
+    return -1L;
+}
+
 int connect_server() {
   int ret_code = 0;
   char buf[AVG_SIZE];
