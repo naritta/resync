@@ -13,6 +13,14 @@
 #include <stdbool.h>
 #include <fcntl.h>
 
+#define SERVER_ADDR "127.0.0.1"
+#define SERVER_PORT 7777
+#define SYNC_PORT 7778
+#define AVG_SIZE 256
+#define MAX_DATA_SIZE 65335
+#define MAX_PATH 1024
+#define ACK_SIZE 32
+
 int connect_server() {
   int ret_code = 0;
   char buf[AVG_SIZE];
